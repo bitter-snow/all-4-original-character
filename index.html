@@ -1,0 +1,165 @@
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>再见</title>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    body {
+      margin: 0;
+      background: #000;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #text {
+      color: #fff;
+      font-size: 40px;
+      text-align: center;
+      font-family: "Times New Roman", "KaiTi", serif;
+      max-width: 80vw;
+      opacity: 0;
+      transition: opacity 0.3s;
+      line-height: 1.6;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    #text.show { opacity: 1; }
+    .admin-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.9);
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+      gap: 8px;
+      flex-wrap: wrap;
+      z-index: 100;
+      border: 1px solid #333;
+    }
+    body.admin .admin-panel { display: flex; }
+    .admin-panel input, .admin-panel button, .admin-panel textarea, .admin-panel select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+    }
+    .admin-panel textarea { width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="text"></div>
+  <div class="admin-panel">
+    <textarea id="words" rows="4"></textarea>
+    <input type="color" id="color" value="#ffffff">
+    <input type="number" id="size" value="30">
+    <select id="font">
+      <option value="Times New Roman, KaiTi, serif">衬线体</option>
+      <option value="微软雅黑, sans-serif">微软雅黑</option>
+      <option value="Arial, sans-serif">Arial</option>
+    </select>
+    <button id="saveBtn">保存</button>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = '123456';
+    
+    const DEFAULT_TEXTS = `那么，请您听好。
+是的我是贪婪的。
+是的我是浅薄的。
+可在这个！
+傲慢而诡异的世界，
+我似乎早已不屑于——
+分享——
+你们的永恒！`;
+    const textEl = document.getElementById('text');
+    const wordsArea = document.getElementById('words');
+    const colorInput = document.getElementById('color');
+    const sizeInput = document.getElementById('size');
+    const fontSelect = document.getElementById('font');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    let paragraphs = [], currentIndex = -1;
+    
+    if (location.search.includes('admin=' + ADMIN_PASSWORD)) {
+      document.body.classList.add('admin');
+    }
+    
+    function updateTexts() {
+      let raw = wordsArea.value.trim();
+      if (!raw) raw = DEFAULT_TEXTS;
+      paragraphs = raw.split('\n').filter(l => l.trim());
+      if (currentIndex >= paragraphs.length) {
+        currentIndex = -1;
+      }
+    }
+    
+    function showNext() {
+      if (!paragraphs.length) return;
+      if (currentIndex >= paragraphs.length - 1) {
+        currentIndex = -1;
+      }
+      currentIndex++;
+      textEl.classList.remove('show');
+      setTimeout(() => {
+        textEl.textContent = paragraphs[currentIndex];
+        textEl.classList.add('show');
+      }, 10);
+    }
+    
+    function updateStyle() {
+      textEl.style.color = colorInput.value;
+      textEl.style.fontSize = sizeInput.value + 'px';
+      textEl.style.fontFamily = fontSelect.value;
+    }
+    
+    function saveData() {
+      const data = { texts: wordsArea.value, color: colorInput.value, size: sizeInput.value, font: fontSelect.value };
+      localStorage.setItem('mySiteData', JSON.stringify(data));
+      alert('已保存');
+    }
+    
+    function loadData() {
+      const saved = localStorage.getItem('mySiteData');
+      if (saved) {
+        const data = JSON.parse(saved);
+        wordsArea.value = data.texts || DEFAULT_TEXTS;
+        colorInput.value = data.color || '#ffffff';
+        sizeInput.value = data.size || '30';
+        fontSelect.value = data.font || 'Times New Roman, KaiTi, serif';
+      } else {
+        wordsArea.value = DEFAULT_TEXTS;
+      }
+      updateTexts();
+      updateStyle();
+      setTimeout(() => {
+        if (paragraphs.length && currentIndex === -1) {
+          showNext();
+        }
+      }, 100);
+    }
+    
+    wordsArea.oninput = updateTexts;
+    colorInput.oninput = updateStyle;
+    sizeInput.oninput = updateStyle;
+    fontSelect.onchange = updateStyle;
+    saveBtn.onclick = saveData;
+    
+    document.body.onclick = (e) => {
+      if (!e.target.closest('.admin-panel')) {
+        showNext();
+      }
+    };
+    
+    loadData();
+  </script>
+</body>
+</html>
